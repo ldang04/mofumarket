@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { getStoredMember } from '@/lib/utils';
 import { Party, EventWithPrices, PartyMember } from '@/lib/types';
@@ -29,9 +29,9 @@ interface PartyClientProps {
 
 export default function PartyClient({ party, events: initialEvents, initialMember, allBets = [], partyMembers = [] }: PartyClientProps) {
   const router = useRouter();
+  const [, startTransition] = useTransition();
   const [member, setMember] = useState<PartyMember | null>(initialMember || null);
   const [events, setEvents] = useState<EventWithPrices[]>(initialEvents);
-  const [loading, setLoading] = useState(false);
   const [showMembers, setShowMembers] = useState(false);
 
   useEffect(() => {
@@ -57,6 +57,11 @@ export default function PartyClient({ party, events: initialEvents, initialMembe
     }
   }, [party.id, initialMember]);
 
+  // Sync events state when initialEvents changes (after refresh)
+  useEffect(() => {
+    setEvents(initialEvents);
+  }, [initialEvents]);
+
   const handleJoinSuccess = async (memberId: string) => {
     // Fetch updated member data
     const res = await fetch(`/api/member?id=${memberId}&partyId=${party.id}`);
@@ -72,8 +77,18 @@ export default function PartyClient({ party, events: initialEvents, initialMembe
   };
 
   const handleBetSuccess = async () => {
+    // Fetch updated member balance immediately
+    if (member) {
+      const res = await fetch(`/api/member?id=${member.id}&partyId=${party.id}`);
+      const data = await res.json();
+      if (data.member) {
+        setMember(data.member);
+      }
+    }
     // Refresh the page to get updated data
-    router.refresh();
+    startTransition(() => {
+      router.refresh();
+    });
   };
 
   const handleEventUpdated = async () => {
@@ -100,14 +115,6 @@ export default function PartyClient({ party, events: initialEvents, initialMembe
       router.refresh();
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-slate-600">Loading...</p>
-      </div>
-    );
-  }
 
   if (!member) {
     return (
@@ -138,9 +145,12 @@ export default function PartyClient({ party, events: initialEvents, initialMembe
                   onClick={() => {
                     navigator.clipboard.writeText(party.party_code);
                   }}
-                  className="ml-auto px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  className="ml-auto p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+                  title="Copy code"
                 >
-                  Copy Code
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
                 </button>
               </div>
               

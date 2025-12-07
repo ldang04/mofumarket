@@ -71,7 +71,7 @@ export default function BetModal({
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-md w-full shadow-xl">
         <h2 className="text-xl font-bold mb-4 text-slate-900">
-          Bet {outcomeName.toUpperCase()}
+          {outcomeName.toUpperCase()}
         </h2>
 
         <div className="mb-4 space-y-2 text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">

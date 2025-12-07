@@ -2,8 +2,9 @@
 
 body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  background-color: #faf8f5;
-  background-image: radial-gradient(circle, #d4c4b0 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: 0 0;
+  background-color: #fafbfc;
+}
+
+button {
+  border-radius: 2rem;
 }

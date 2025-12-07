@@ -1,5 +1,6 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { supabase } from '@/lib/supabase-server';
 import { calculateMultiOutcomePrices } from '@/lib/pricing';
 
@@ -192,6 +193,18 @@ export async function placeBetAction(data: {
     }));
 
     await supabase.from('outcome_price_history').insert(priceHistoryEntries);
+
+    // Get party slug for revalidation
+    const { data: party } = await supabase
+      .from('parties')
+      .select('slug')
+      .eq('id', event.party_id)
+      .maybeSingle();
+
+    if (party?.slug) {
+      revalidatePath(`/party/${party.slug}`);
+      revalidatePath(`/party/${party.slug}/event/${data.eventId}`);
+    }
 
     return { success: true };
   } catch (error) {

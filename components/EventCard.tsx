@@ -197,7 +197,7 @@ export default function EventCard({ event, memberId, memberBalance, isCreator = 
                     e.currentTarget.style.opacity = '1';
                   }}
                 >
-                  Bet {outcome.name.toUpperCase()}
+                  {outcome.name.toUpperCase()}
                 </button>
               );
             })}
