@@ -169,7 +169,7 @@ export default function EventCard({ event, memberId, memberBalance, isCreator = 
                   className="text-slate-900 font-semibold text-lg"
                   style={{ color: outcome.color }}
                 >
-                  {price.toFixed(3)} mofus ({(prob * 100).toFixed(1)}%)
+                  {(prob * 100).toFixed(1)}% ({price.toFixed(3)}/share)
                 </span>
               </div>
             );
