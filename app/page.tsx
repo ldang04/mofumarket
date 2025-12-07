@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import DollarRain from "@/components/DollarRain";
 
 export default function Home() {
   const router = useRouter();
@@ -18,8 +19,9 @@ export default function Home() {
   };
 
   return (
-    <div className="h-[calc(100vh-80px)] flex items-center justify-center px-4 bg-[#faf8f5]">
-      <main className="max-w-2xl w-full space-y-8">
+    <div className="h-[calc(100vh-80px)] flex items-center justify-center px-4 bg-white relative overflow-hidden">
+      <DollarRain />
+      <main className="max-w-2xl w-full space-y-8 relative z-10">
         <div className="text-center space-y-4">
           <Image 
             src="/assets/images/mofu_party.png" 

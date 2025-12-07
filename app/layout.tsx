@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MofuMarket - Social Prediction Markets",
+  title: "MofuMarket - Predictive Markets for Social Events",
   description: "Create parties and bet on events with fake currency",
+  icons: {
+    icon: '/assets/images/mofu_icon.png',
+  },
 };
 
 export default function RootLayout({
@@ -29,7 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased text-slate-900`}
       >
-        <nav className="border-b border-slate-200 bg-white shadow-sm">
+        <nav className="border-b border-slate-200 bg-white shadow-sm relative z-50">
           <div className="max-w-7xl mx-auto px-4 py-5">
             <Link href="/" className="flex items-center gap-3 text-3xl font-bold text-slate-900 hover:text-slate-700 transition-colors">
               <Image src="/assets/images/mofu_icon.png" alt="Mofu" width={36} height={36} />
