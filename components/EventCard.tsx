@@ -176,33 +176,55 @@ export default function EventCard({ event, memberId, memberBalance, isCreator = 
           })}
         </div>
 
-        {event.status === 'open' && (
-          <div className="grid grid-cols-2 gap-2">
-            {event.outcomes.map((outcome) => {
-              const price = event.outcomePrices[outcome.name] || 0;
-              const prob = event.outcomeProbs[outcome.name] || 0;
-              return (
-                <button
-                  key={outcome.name}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setBetModalOpen(outcome.name);
-                  }}
-                  className="px-3 py-2.5 rounded-lg font-medium transition-colors shadow-sm text-white text-sm"
-                  style={{ backgroundColor: outcome.color }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.opacity = '0.9';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.opacity = '1';
-                  }}
-                >
-                  {outcome.name.toUpperCase()}
-                </button>
-              );
-            })}
-          </div>
-        )}
+        {event.status === 'open' && (() => {
+          // Check for active (non-reversed) call
+          const activeCall = event.calls?.find(call => !call.is_reversed);
+          
+          if (activeCall) {
+            // Show result instead of betting buttons
+            const calledOutcome = event.outcomes.find(o => o.name === activeCall.proposed_outcome);
+            return (
+              <div className="p-3 rounded-lg border-2" style={{
+                backgroundColor: calledOutcome ? `${calledOutcome.color}15` : '#f1f5f9',
+                borderColor: calledOutcome ? calledOutcome.color : '#cbd5e1',
+              }}>
+                <div className="text-xs text-slate-600 mb-1">Event Called</div>
+                <div className="text-lg font-bold capitalize" style={{ color: calledOutcome?.color || '#64748b' }}>
+                  {activeCall.proposed_outcome.toUpperCase()}
+                </div>
+              </div>
+            );
+          }
+          
+          // Show betting buttons if no active call
+          return (
+            <div className="grid grid-cols-2 gap-2">
+              {event.outcomes.map((outcome) => {
+                const price = event.outcomePrices[outcome.name] || 0;
+                const prob = event.outcomeProbs[outcome.name] || 0;
+                return (
+                  <button
+                    key={outcome.name}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setBetModalOpen(outcome.name);
+                    }}
+                    className="px-3 py-2.5 rounded-lg font-medium transition-colors shadow-sm text-white text-sm"
+                    style={{ backgroundColor: outcome.color }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '0.9';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '1';
+                    }}
+                  >
+                    {outcome.name.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       {betModalOpen && (() => {

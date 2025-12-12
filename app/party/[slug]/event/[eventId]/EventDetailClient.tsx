@@ -7,7 +7,7 @@ import { getStoredMember } from '@/lib/utils';
 import { Event, Party, EventOutcome, OutcomePriceHistory, EventCall } from '@/lib/types';
 import MultiOutcomeSparkline from '@/components/MultiOutcomeSparkline';
 import BetModal from '@/components/BetModal';
-import { callEventAction, confirmEventOutcomeAction, reverseCallAction } from '@/app/actions/callActions';
+import { callEventAction, confirmEventOutcomeAction, reverseCallAction, reverseConfirmedOutcomeAction } from '@/app/actions/callActions';
 
 interface EventDetailClientProps {
   eventData: {
@@ -106,6 +106,24 @@ export default function EventDetailClient({ eventData, partySlug }: EventDetailC
 
     const result = await reverseCallAction({
       eventCallId: callId,
+      partyMemberId: member.id,
+    });
+
+    if ('error' in result) {
+      setError(result.error);
+    } else {
+      router.refresh();
+    }
+    setLoading(false);
+  };
+
+  const handleReverseConfirmedOutcome = async () => {
+    if (!member) return;
+    setLoading(true);
+    setError(null);
+
+    const result = await reverseConfirmedOutcomeAction({
+      eventId: eventData.event.id,
       partyMemberId: member.id,
     });
 
@@ -252,30 +270,55 @@ export default function EventDetailClient({ eventData, partySlug }: EventDetailC
             )}
           </div>
 
-          {eventData.event.status === 'open' && member && (
-            <div className="grid grid-cols-2 gap-2 mb-6">
-              {eventData.outcomes.map((outcome) => {
-                const price = eventData.outcomePrices[outcome.name] || 0;
-                const prob = eventData.outcomeProbs[outcome.name] || 0;
-                return (
-                  <button
-                    key={outcome.name}
-                    onClick={() => setBetModalOpen(outcome.name)}
-                    className="px-4 py-2 rounded-lg font-medium transition-colors shadow-sm text-white text-sm"
-                    style={{ backgroundColor: outcome.color }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.opacity = '0.9';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.opacity = '1';
-                    }}
-                  >
-                    Bet {outcome.name.toUpperCase()}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          {eventData.event.status === 'open' && member && (() => {
+            // Check for active (non-reversed) call
+            const activeCall = eventData.calls.find(call => !call.is_reversed);
+            
+            if (activeCall) {
+              // Show result instead of betting buttons
+              const calledOutcome = eventData.outcomes.find(o => o.name === activeCall.proposed_outcome);
+              return (
+                <div className="mb-6 p-4 rounded-lg border-2" style={{
+                  backgroundColor: calledOutcome ? `${calledOutcome.color}15` : '#f1f5f9',
+                  borderColor: calledOutcome ? calledOutcome.color : '#cbd5e1',
+                }}>
+                  <div className="text-sm text-slate-600 mb-1">Event Called</div>
+                  <div className="text-2xl font-bold capitalize" style={{ color: calledOutcome?.color || '#64748b' }}>
+                    {activeCall.proposed_outcome.toUpperCase()}
+                  </div>
+                  {activeCall.justification && (
+                    <div className="text-sm text-slate-600 mt-2">{activeCall.justification}</div>
+                  )}
+                </div>
+              );
+            }
+            
+            // Show betting buttons if no active call
+            return (
+              <div className="grid grid-cols-2 gap-2 mb-6">
+                {eventData.outcomes.map((outcome) => {
+                  const price = eventData.outcomePrices[outcome.name] || 0;
+                  const prob = eventData.outcomeProbs[outcome.name] || 0;
+                  return (
+                    <button
+                      key={outcome.name}
+                      onClick={() => setBetModalOpen(outcome.name)}
+                      className="px-4 py-2 rounded-lg font-medium transition-colors shadow-sm text-white text-sm"
+                      style={{ backgroundColor: outcome.color }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                      }}
+                    >
+                      Bet {outcome.name.toUpperCase()}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -421,6 +464,23 @@ export default function EventDetailClient({ eventData, partySlug }: EventDetailC
                     {loading ? 'Confirming...' : `Confirm ${outcome.name.toUpperCase()}`}
                   </button>
                 ))}
+              </div>
+            )}
+
+            {eventData.event.status === 'resolved' && member?.is_creator && (
+              <div className="mt-6">
+                <button
+                  onClick={handleReverseConfirmedOutcome}
+                  disabled={loading}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-slate-300 text-white rounded-lg font-medium transition-colors shadow-sm"
+                >
+                  {loading ? 'Reversing...' : 'Reverse Confirmed Outcome'}
+                </button>
+                {eventData.event.final_outcome && (
+                  <p className="text-sm text-slate-600 mt-2">
+                    Confirmed outcome: <span className="font-semibold capitalize">{eventData.event.final_outcome}</span>
+                  </p>
+                )}
               </div>
             )}
           </div>

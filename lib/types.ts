@@ -79,6 +79,7 @@ export type EventWithPrices = Event & {
   outcomePrices: Record<string, number>;
   outcomeProbs: Record<string, number>;
   priceHistory: OutcomePriceHistory[];
+  calls?: EventCall[]; // Active and reversed calls for this event
 };
 
 export type StoredPartyMember = {

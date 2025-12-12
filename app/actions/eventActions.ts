@@ -102,6 +102,17 @@ export async function placeBetAction(data: {
       return { error: 'Event is not open for betting' };
     }
 
+    // Check for active (non-reversed) calls
+    const { data: activeCalls } = await supabase
+      .from('event_calls')
+      .select('id')
+      .eq('event_id', data.eventId)
+      .eq('is_reversed', false);
+
+    if (activeCalls && activeCalls.length > 0) {
+      return { error: 'Event has been called - betting is disabled' };
+    }
+
     // Verify outcome exists
     const { data: outcome } = await supabase
       .from('event_outcomes')

@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase-server';
 import { calculateMultiOutcomePrices } from '@/lib/pricing';
-import { EventWithPrices, PartyMember, EventOutcome, OutcomePriceHistory } from '@/lib/types';
+import { EventWithPrices, PartyMember, EventOutcome, OutcomePriceHistory, EventCall } from '@/lib/types';
 import PartyClient from './PartyClient';
 
 async function getPartyData(slug: string, memberId?: string) {
@@ -116,12 +116,22 @@ async function getPartyData(slug: string, memberId?: string) {
         }
       }
 
+      // Get event calls
+      const { data: callsData } = await supabase
+        .from('event_calls')
+        .select('*')
+        .eq('event_id', event.id)
+        .order('created_at', { ascending: false });
+
+      const calls = callsData || [];
+
       return {
         ...event,
         outcomes: eventOutcomes,
         outcomePrices: prices,
         outcomeProbs: probs,
         priceHistory: priceHistory,
+        calls: calls,
       };
     })
   );

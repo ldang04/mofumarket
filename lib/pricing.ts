@@ -55,3 +55,56 @@ export function calculatePayout(
   const payout = betStake + share * totalLosingStake;
   return Math.floor(payout);
 }
+
+/**
+ * Distributes losing mofus proportionally among winners based on their stake.
+ * Returns an array of payouts (whole numbers) where each payout = stake + proportional share of losing stakes.
+ * Total payouts will equal totalWinningStake + totalLosingStake.
+ * Uses largest remainder method to ensure fair distribution of whole numbers.
+ */
+export function distributePayouts(
+  winningBets: Array<{ stake_mofus: number }>,
+  totalWinningStake: number,
+  totalLosingStake: number
+): number[] {
+  if (totalWinningStake === 0 || winningBets.length === 0) {
+    // Return original stakes if no winners
+    return winningBets.map(bet => bet.stake_mofus);
+  }
+
+  if (totalLosingStake === 0) {
+    // No losing stakes to distribute, return original stakes
+    return winningBets.map(bet => bet.stake_mofus);
+  }
+
+  // Calculate proportional shares of losing stakes (as decimals)
+  // Each winner gets: their stake + (their stake / totalWinningStake) * totalLosingStake
+  const shares = winningBets.map(bet => ({
+    stake: bet.stake_mofus,
+    shareOfLosing: (bet.stake_mofus / totalWinningStake) * totalLosingStake,
+    totalPayout: bet.stake_mofus + (bet.stake_mofus / totalWinningStake) * totalLosingStake,
+  }));
+
+  // Calculate floor payouts and remainders
+  const floorPayouts = shares.map(s => Math.floor(s.totalPayout));
+  const remainders = shares.map((s, i) => ({
+    index: i,
+    remainder: s.totalPayout - floorPayouts[i],
+  }));
+
+  // Calculate total distributed so far
+  const totalDistributed = floorPayouts.reduce((sum, p) => sum + p, 0);
+  const totalToDistribute = totalWinningStake + totalLosingStake;
+  const remainder = totalToDistribute - totalDistributed;
+
+  // Sort remainders descending to distribute remainder to those with largest fractional parts
+  remainders.sort((a, b) => b.remainder - a.remainder);
+
+  // Distribute remainder (rounding up for those with largest remainders)
+  const payouts = [...floorPayouts];
+  for (let i = 0; i < Math.min(Math.floor(remainder), remainders.length); i++) {
+    payouts[remainders[i].index]++;
+  }
+
+  return payouts;
+}
